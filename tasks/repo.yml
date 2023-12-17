@@ -1,5 +1,0 @@
----
-- name: "Manage Debian repos"
-  ansible.builtin.include_tasks: "repo/{{ item }}.yml"
-  loop: "{{ repos }}"
-  tags: repo

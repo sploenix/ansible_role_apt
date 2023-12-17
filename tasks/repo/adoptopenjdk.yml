@@ -1,16 +1,16 @@
 ---
 - block:
     - name: "Manage gpg key for adoptopenjdk Debian repo"
-      apt_key:
+      ansible.builtin.apt_key:
         url: "https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public"
-        state: "{{ 'present' if (repo_adoptopenjdk_enable | default(False)) else 'absent' }}"
-    - name: "Manage adoptopenjdk debian repo"
-      apt_repository:
-        repo: deb https://adoptopenjdk.jfrog.io/adoptopenjdk/deb {{ ansible_distribution_release }} main
-        state: "{{ 'present' if (repo_adoptopenjdk_enable | default(False)) else 'absent' }}"
+        state: "{{ 'present' if 'adoptopenjdk' in repos else 'absent' }}"
+
+    - name: "Manage adoptopenjdk debian repository"
+      ansible.builtin.apt_repository:
+        repo: deb https://adoptopenjdk.jfrog.io/adoptopenjdk/deb {{ wanted_release }} main
+        state: "{{ 'present' if 'adoptopenjdk' in repos else 'absent' }}"
         filename: adoptopenjdk
-        update_cache: yes
-  when: ansible_distribution == "Debian"
+        update_cache: true
   environment:
     https_proxy: "{{ apt_proxy }}"
   tags:

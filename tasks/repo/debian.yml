@@ -28,8 +28,6 @@
     - name: "Update package cache"
       ansible.builtin.apt:
         update_cache: true
-
-  when: ansible_distribution == "Debian"
   environment:
     https_proxy: "{{ apt_proxy }}"
   tags:

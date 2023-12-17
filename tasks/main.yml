@@ -7,9 +7,9 @@
   ignore_errors: true
   tags: repo
 
-- name: "Configure repositories"
-  when: repos is defined
-  ansible.builtin.import_tasks: repo.yml
+- name: "Manage Debian repositories"
+  ansible.builtin.include_tasks: "repo/{{ item }}.yml"
+  loop: "{{ repos + (repos_absent | d([])) }}"
   tags: repo
 
 - name: "Manage packages"

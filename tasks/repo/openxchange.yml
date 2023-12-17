@@ -1,22 +1,23 @@
 ---
 - block:
     - name: "Manage gpg key for openxchange Debian repo"
-      apt_key:
+      ansible.builtin.apt_key:
         url: https://software.open-xchange.com/products/appsuite/stable/backend/Debian{{ ansible_distribution_release[0]|upper }}{{ ansible_distribution_release[1:] }}/Release.key
-        state: "{{ 'present' if (repo_openxchange_enable | default(False)) else 'absent' }}"
+        state: "{{ 'present' if 'openxchange' in repos else 'absent' }}"
+
     - name: "Manage openxchange Debian UI repo"
-      apt_repository:
+      ansible.builtin.apt_repository:
         repo: deb https://software.open-xchange.com/products/appsuite/stable/appsuiteui/Debian{{ ansible_distribution_release[0]|upper }}{{ ansible_distribution_release[1:] }}/ /
-        state: "{{ 'present' if (repo_openxchange_enable | default(False)) else 'absent' }}"
+        state: "{{ 'present' if 'openxchange' in repos else 'absent' }}"
         filename: software_open-xchange_com
-        update_cache: yes
+        update_cache: true
+
     - name: "Manage openxchange Debian backend repo"
-      apt_repository:
+      ansible.builtin.apt_repository:
         repo: deb https://software.open-xchange.com/products/appsuite/stable/backend/Debian{{ ansible_distribution_release[0]|upper }}{{ ansible_distribution_release[1:] }}/ /
-        state: "{{ 'present' if (repo_openxchange_enable | default(False)) else 'absent' }}"
+        state: "{{ 'present' if 'openxchange' in repos else 'absent' }}"
         filename: software_open-xchange_com
-        update_cache: yes
-  when: ansible_distribution == "Debian"
+        update_cache: true
   environment:
     https_proxy: "{{ apt_proxy }}"
   tags:

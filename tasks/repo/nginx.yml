@@ -1,12 +1,12 @@
 ---
 - block:
     - name: "Manage gpg key for nginx Debian repo"
-      apt_key:
+      ansible.builtin.apt_key:
         url: "https://nginx.org/keys/nginx_signing.key"
         state: "{{ 'present' if 'nginx' in repos else 'absent' }}"
 
     - name: "Manage nginx Debian repo"
-      apt_repository:
+      ansible.builtin.apt_repository:
         repo: "deb https://nginx.org/packages/debian {{ ansible_distribution_release }} nginx"
         state: "{{ 'present' if 'nginx' in repos else 'absent' }}"
         filename: nginx

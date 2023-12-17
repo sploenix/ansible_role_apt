@@ -1,16 +1,16 @@
 ---
 - block:
     - name: "Manage gpg key for keydb Debian repo"
-      apt_key:
+      ansible.builtin.apt_key:
         url: https://download.keydb.dev/open-source-dist/keyring.gpg
-        state: "{{ 'present' if (repo_keydb_enable | default(False)) else 'absent' }}"
+        state: "{{ 'present' if 'keydb' in repos else 'absent' }}"
+
     - name: "Manage keydb Debian repo"
-      apt_repository:
+      ansible.builtin.apt_repository:
         repo: deb https://download.keydb.dev/open-source-dist {{ ansible_distribution_release }} main
-        state: "{{ 'present' if (repo_keydb_enable | default(False)) else 'absent' }}"
+        state: "{{ 'present' if 'keydb' in repos else 'absent' }}"
         filename: keydb
-        update_cache: yes
-  when: ansible_distribution == "Debian"
+        update_cache: true
   environment:
     https_proxy: "{{ apt_proxy }}"
   tags:
