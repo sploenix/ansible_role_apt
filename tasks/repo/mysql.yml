@@ -1,0 +1,32 @@
+---
+- block:
+    - name: "Manage gpg key for Mysql Debian repo"
+      apt_key:
+        data: "{{ lookup('file', 'repo/debian/mysql.asc') }}"
+        state: "{{ 'present' if (repo_mysql_enable | default(False)) else 'absent' }}"
+
+    - name: "Remove old repository file"
+      file:
+        state: absent
+        path: "/etc/apt/sources.list.d/repo_mysql_com_apt_debian.list"
+
+    - name: "Use buster repo on bullseye for mysql 5.7"
+      set_fact:
+         repo_distribution: buster
+      when: >
+        ansible_distribution_release == 'bullseye'
+        and mysql_version == 5.7
+        and (mysql_dist | default('mysql-tools')) != 'mysql-tools'
+
+    - name: "Manage Mysql Debian repo"
+      vars:
+        wanted_dist: "{{ mysql_dist | default('mysql-tools') }}"
+      apt_repository:
+        repo: deb https://repo.mysql.com/apt/debian/ {{ repo_distribution| default(ansible_distribution_release) }} {{ wanted_dist }}
+        state: "{{ 'present' if (repo_mysql_enable | default(False)) else 'absent' }}"
+        filename: mysql
+        update_cache: yes
+  when: ansible_distribution == "Debian"
+  environment:
+    https_proxy: "{{ apt_proxy }}"
+  tags: repo

@@ -1,0 +1,22 @@
+---
+- name: "Install required packages + update apt cache"
+  ansible.builtin.apt:
+    name: "{{ packages_present_apt }}"
+    state: latest
+    update_cache: true
+  ignore_errors: true
+  tags: repo
+
+- name: "Configure repositories"
+  when: repos is defined
+  ansible.builtin.import_tasks: repo.yml
+  tags: repo
+
+- name: "Manage packages"
+  when: packages_present is defined or
+        packages_absent is defined
+  ansible.builtin.import_tasks: packages.yml
+  tags:
+    - packages
+    - package
+    - pkg

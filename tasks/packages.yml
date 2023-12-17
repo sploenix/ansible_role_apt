@@ -1,0 +1,51 @@
+---
+- name: "Install packages for {{ call_from | d(role_names) }}"
+  ansible.builtin.apt:
+    allow_change_held_packages: "{{ allow_change_held_packages | d(omit) }}"
+    allow_downgrade: "{{ allow_downgrade | d(omit) }}"
+    allow_unauthenticated: "{{ allow_unauthenticated | d(omit) }}"
+    autoclean: "{{ autoclean | d(omit) }}"
+    autoremove: "{{ autoremove | d(omit) }}"
+    cache_valid_time: "{{ cache_valid_time | d(omit) }}"
+    clean: "{{ clean | d(omit) }}"
+    deb: "{{ deb | d(omit) }}"
+    default_release: "{{ default_release | d(omit) }}"
+    dpkg_options: "{{ dpkg_options | d(omit) }}"
+    fail_on_autoremove: "{{ fail_on_autoremove | d(omit) }}"
+    force: "{{ force | d(omit) }}"
+    force_apt_get: "{{ force_apt_get | d(omit) }}"
+    install_recommends: "{{ install_recommends | d(omit) }}"
+    lock_timeout: "{{ lock_timeout | d(omit) }}"
+    name: "{{ packages_present | select() }}"
+    only_upgrade: "{{ only_upgrade | d(omit) }}"
+    policy_rc_d: "{{ policy_rc_d | d(omit) }}"
+    purge: "{{ purge | d(omit) }}"
+    state: "{{ state | d(omit) }}"
+    update_cache: "{{ update_cache | d(omit) }}"
+    update_cache_retries: "{{ update_cache_retries | d(omit) }}"
+    update_cache_retry_max_delay: "{{ update_cache_retry_max_delay | d(omit) }}"
+    upgrade: "{{ upgrade | d(omit) }}"
+  ignore_errors: "{{ ansible_check_mode }}"
+  when: packages_present | d(false)
+
+- name: "Remove packages for {{ call_from | d(role_names) }}"
+  ansible.builtin.apt:
+    name: "{{ packages_absent | select() }}"
+    state: absent
+    autoremove: "{{ true if autoremove | d(false) else false }}"
+    purge: "{{ true if purge | d(false) else false }}"
+  when: packages_absent | d(false)
+
+- name: "Hold package for {{ call_from | d(role_names) }}"
+  ansible.builtin.dpkg_selections:
+    name: "{{ item | select() }}"
+    selection: hold
+  loop: "{{ packages_hold }}"
+  when: packages_hold | d(false)
+
+- name: "Unhold package for {{ call_from | d(role_names) }}"
+  ansible.builtin.dpkg_selections:
+    name: "{{ item | select() }}"
+    selection: install
+  loop: "{{ packages_hold }}"
+  when: packages_unhold | d(false)

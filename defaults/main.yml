@@ -1,0 +1,17 @@
+---
+# default enabled repos
+repos: []
+
+packages_present_apt:
+  - aptitude
+  - ca-certificates
+  - gnupg2
+
+default_pools:
+  - main
+  - contrib
+  - non-free
+
+wanted_release: "{{ ansible_distribution_release }}"
+
+apt_proxy: ""

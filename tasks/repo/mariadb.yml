@@ -1,0 +1,39 @@
+---
+- block:
+    - name: "Fail when mariadb_version not set"
+      fail:
+        msg: "mariadb_version not set"
+      when: not (mariadb_version | default(False))
+
+    - name: "Manage gpg key for MariaDB Debian repo"
+      apt_key:
+        url: https://mariadb.org/mariadb_release_signing_key.asc
+        state: "{{ 'present' if (repo_mariadb_enable | default(False)) else 'absent' }}"
+
+    - name: "Find old repo files"
+      find:
+        paths: /etc/apt/sources.list.d
+        patterns: "mariadb_mirror_*"
+      register: old_repo_files
+
+    - name: "Remove old repo files"
+      file:
+        path: "{{ old_repo_file.path }}"
+        state: absent
+
+      loop: "{{ old_repo_files.files | default([]) }}"
+      loop_control:
+        loop_var: old_repo_file
+
+    - name: "Manage MariaDB Debian repo"
+      apt_repository:
+        repo: deb https://downloads.mariadb.com/MariaDB/mariadb-{{ mariadb_version }}/repo/debian {{ ansible_lsb.codename }} main
+        state: "{{ 'present' if (repo_mariadb_enable | default(False)) else 'absent' }}"
+        filename: mariadb
+        update_cache: yes
+
+  when: ansible_distribution == "Debian"
+  environment:
+    https_proxy: "{{ apt_proxy }}"
+  tags:
+    - repo

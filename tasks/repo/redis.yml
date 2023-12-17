@@ -1,0 +1,17 @@
+---
+- block:
+    - name: "Manage gpg key for redis Debian repo"
+      apt_key:
+        url: https://packages.redis.io/gpg
+        state: "{{ 'present' if (repo_redis_enable | default(False)) else 'absent' }}"
+    - name: "Manage redis Debian repo"
+      apt_repository:
+        repo: deb https://packages.redis.io/deb {{ wanted_release }} main
+        state: "{{ 'present' if (repo_redis_enable | default(False)) else 'absent' }}"
+        filename: redis
+        update_cache: yes
+  when: ansible_distribution == "Debian"
+  environment:
+    https_proxy: "{{ apt_proxy }}"
+  tags:
+    - repo

@@ -1,0 +1,17 @@
+---
+- block:
+    - name: "Manage gpg key for Docker Debian repo"
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: "{{ 'present' if 'docker' in repos else 'absent' }}"
+
+    - name: "Manage Docker Debian repo"
+      ansible.builtin.apt_repository:
+        repo: deb https://download.docker.com/linux/debian {{ wanted_release }} stable
+        state: "{{ 'present' if 'docker' in repos else 'absent' }}"
+        filename: docker
+        update_cache: true
+  environment:
+    https_proxy: "{{ apt_proxy }}"
+  tags:
+    - repo

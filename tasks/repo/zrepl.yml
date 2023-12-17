@@ -1,0 +1,20 @@
+---
+- block:
+    - name: "Fetch ZREPL Debian apt key"
+      ansible.builtin.get_url:
+        url: https://zrepl.cschwarz.com/apt/apt-key.asc
+        dest: /etc/apt/trusted.gpg.d/zrepl.asc
+        mode: 0644
+        owner: root
+        group: root
+
+    - name: "Configure zrepl repository on Debian"
+      ansible.builtin.apt_repository:
+        repo: "deb https://zrepl.cschwarz.com/apt/debian {{ ansible_distribution_release }} main"
+        state: "{{ 'present' if 'zrepl' in repos else 'absent' }}"
+        filename: zrepl
+        update_cache: true
+  environment:
+    https_proxy: "{{ apt_proxy }}"
+  tags:
+    - repo

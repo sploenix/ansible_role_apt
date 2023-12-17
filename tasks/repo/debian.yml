@@ -1,0 +1,36 @@
+---
+- block:
+    - name: "Configure Debian default repositories"
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/debian.list
+        content: |
+          deb {{ repo_url }} {{ wanted_release }} {{ wanted_pools | join(' ') }}
+          deb {{ repo_url }} {{ wanted_release }}-updates {{ wanted_pools | join(' ') }}
+          deb {{ repo_url }} {{ wanted_release }}-backports {{ wanted_pools | join(' ') }}
+          deb {{ repo_url_security }} {{ wanted_release }}-security {{ wanted_pools | join(' ') }}
+      vars:
+        repo_url: http://ftp.de.debian.org/debian
+        repo_url_security: https://security.debian.org/debian-security
+        wanted_pools: "{{ default_pools if ansible_distribution_major_version | int < 12 else default_pools + ['non-free-firmware'] }}"
+
+    - name: "Remove legacy repo files"
+      ansible.builtin.file:
+        path: "{{ file }}"
+        state: absent
+      loop:
+        - /etc/apt/sources.list
+        - /etc/apt/sources.list.d/ftp_de_debian_org_debian.list
+        - /etc/apt/sources.list.d/security_debian_org.list
+        - /etc/apt/sources.list.d/security_debian_org_debian_security.list
+      loop_control:
+        loop_var: file
+
+    - name: "Update package cache"
+      ansible.builtin.apt:
+        update_cache: true
+
+  when: ansible_distribution == "Debian"
+  environment:
+    https_proxy: "{{ apt_proxy }}"
+  tags:
+    - repo

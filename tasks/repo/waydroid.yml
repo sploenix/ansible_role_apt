@@ -1,0 +1,18 @@
+---
+- block:
+    - name: "Fetch waydroid repo gpg key"
+      ansible.builtin.get_url:
+        url: https://repo.waydro.id/waydroid.gpg
+        dest: /etc/apt/trusted.gpg.d/waydroid.gpg
+        mode: 0644
+
+    - name: "Configure waydroid repository"
+      ansible.builtin.apt_repository:
+        repo: "deb https://repo.waydro.id {{ wanted_release }} main"
+        state: "{{ 'present' if 'waydroid' in repos else 'absent' }}"
+        filename: waydroid
+        update_cache: true
+  environment:
+    https_proxy: "{{ apt_proxy }}"
+  tags:
+    - repo

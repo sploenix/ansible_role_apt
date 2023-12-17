@@ -1,0 +1,43 @@
+---
+- block:
+    - name: "Find old repo files"
+      find:
+        paths: /etc/apt/sources.list.d
+        patterns: "download_bareos*"
+      register: old_repo_files
+
+    - name: "Remove old repo files"
+      file:
+        path: "{{ old_repo_file.path }}"
+        state: absent
+      loop: "{{ old_repo_files.files | default([]) }}"
+      loop_control:
+        loop_var: old_repo_file
+  when: ansible_distribution == "Debian"
+  environment:
+    https_proxy: "{{ apt_proxy }}"
+  tags:
+    - repo
+
+- block:
+    - name: "Add Bareos Ubuntu Repo"
+      apt_repository:
+        repo: "deb http://download.bareos.org/bareos/release/19.2/xUbuntu_{{ansible_distribution_major_version}}.04 /"
+        state: present
+
+    - name: "Add Bareos Ubuntu repo apt keys"
+      apt_key:
+        id: "{{ repo_key }}"
+        state: present
+      loop:
+        - 641A1497F1B11BEA945F840FE5D882B28657AE28
+        - 0143857D9CE8C2D182FE2631F93C028C093BFBA2
+      loop_control:
+        loop_var: repo_key
+  when: >
+    ansible_distribution == "Ubuntu"
+    and ansible_distribution_major_version in ['16', '18']
+  environment:
+    https_proxy: "{{ apt_proxy }}"
+  tags:
+    - repo
