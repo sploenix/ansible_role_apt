@@ -19,9 +19,11 @@
         state: absent
       loop:
         - /etc/apt/sources.list
+        - /etc/apt/sources.list.d/debian.sources
         - /etc/apt/sources.list.d/ftp_de_debian_org_debian.list
         - /etc/apt/sources.list.d/security_debian_org.list
         - /etc/apt/sources.list.d/security_debian_org_debian_security.list
+        - /etc/apt/mirrors
       loop_control:
         loop_var: file
 
