@@ -1,7 +1,6 @@
 ---
 # default enabled repos
-repos:
-  - debian
+repos: []
 
 packages_present_apt:
   - aptitude
