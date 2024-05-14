@@ -6,6 +6,7 @@ packages_present_apt:
   - aptitude
   - ca-certificates
   - gnupg2
+  - python3-apt
 
 default_pools:
   - main
