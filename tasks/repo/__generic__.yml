@@ -1,0 +1,130 @@
+---
+- name: "Remove legacy stuff for {{ rname }} repo"
+  block:
+    - name: "Remove static {{ rname }} repo key with given data"
+      when: key_data is defined
+      ansible.builtin.apt_key:
+        data: "{{ key_data }}"
+        state: absent
+        keyring: /etc/apt/trusted.gpg
+
+    - name: "Remove static {{ rname }} repo key with given data"
+      when: key_if is defined
+      ansible.builtin.apt_key:
+        id: "{{ repo_keys }}"
+        state: absent
+      loop: "{{ legacy_key_ids | d([]) }}"
+      loop_control:
+        loop_var: repo_keys
+
+    - name: "Remove legacy {{ rname }} repo keys from /etc/apt/trusted.gpg"
+      when: repo_keys is defined
+      ansible.builtin.apt_key:
+        url: "{{ repo_keys }}"
+        state: absent
+        keyring: /etc/apt/trusted.gpg
+      loop: "{{ legacy_repo_keys | d([]) }}"
+      loop_control:
+        loop_var: repo_keys
+
+    - name: "Remove current {{ rname }} repo key from legacy keystore /etc/apt/trusted.gpg"
+      when: repo_keys is defined
+      ansible.builtin.apt_key:
+        url: "{{ key_url }}"
+        state: absent
+        keyring: /etc/apt/trusted.gpg
+
+    - name: "Remove legacy {{ rname }} repo key /etc/apt/trusted.gpg.d/{{ rname }}.gpg"
+      ansible.builtin.file:
+        path: "{{ repo_keys }}"
+        state: absent
+      loop:
+        - "/etc/apt/trusted.gpg.d/{{ rname }}.gpg"
+        - "/etc/apt/trusted.gpg.d/{{ rname }}.gpg~"
+      loop_control:
+        loop_var: repo_keys
+      diff: false
+
+    - name: "Remove legacy {{ rname }} repo files"
+      ansible.builtin.file:
+        path: "{{ repo_files }}"
+        state: absent
+      loop: "{{ legacy_repo_files | d([]) }}"
+      loop_control:
+        loop_var: repo_files
+
+    - when: legacy_repo_files_pattern is defined
+      block:
+        - name: "Find old {{ rname }} repo files"
+          ansible.builtin.find:
+            paths: /etc/apt/sources.list.d
+            patterns: "legacy_repo_files_pattern"
+          register: old_repo_files
+
+        - name: "Remove old {{ rname }} repo files"
+          ansible.builtin.file:
+            path: "{{ old_repo_file.path }}"
+            state: absent
+          loop: "{{ old_repo_files.files | d([]) }}"
+          loop_control:
+            loop_var: old_repo_file
+
+- name: "Disable {{ rname }} debian repo"
+  when: disable_repo | d(false)
+  ansible.builtin.file:
+    path: "{{ repo_files }}"
+    state: absent
+  loop:
+    - "{{ repo_file }}"
+    - "{{ key_file }}"
+    - "{{ key_file_asc }}"
+  loop_control:
+    loop_var: repo_files
+
+- name: "Enable {{ rname }} debian repo"
+  when: not disable_repo | d(false)
+  block:
+    - name: "Copy static {{ rname }} repo key data"
+      when: key_data is defined
+      ansible.builtin.copy:
+        dest: "{{ key_file_asc }}"
+        content: "{{ key_data }}"
+        mode: 0644
+      register: copy_asc
+      diff: false
+      ignore_errors: "{{ ansible_check_mode }}"
+
+    - name: "Fetch {{ rname }} repo gpg key"
+      when: key_url is defined
+      ansible.builtin.get_url:
+        url: "{{ key_url }}"
+        dest: "{{ key_file_asc }}"
+        mode: 0644
+      register: fetch_asc
+      ignore_errors: "{{ ansible_check_mode }}"
+
+    - when: (copy_asc.changed | d(false) or fetch_asc.changed | d(false))
+            and not ansible_check_mode
+      block:
+        - name: "Remove dearmored {{ rname }} key if it exists"
+          ansible.builtin.file:
+            path: "{{ key_file }}"
+            state: absent
+          ignore_errors: "{{ ansible_check_mode }}"
+
+        - name: "Dearmor {{ rname }} repo asc key"
+          ansible.builtin.shell: >
+            gpg --dearmor --output
+            {{ key_file }}
+            {{ key_file_asc }}
+          ignore_errors: "{{ ansible_check_mode }}"
+
+    - name: "Configure {{ rname }} debian repo"
+      ansible.builtin.copy:
+        dest: "{{ repo_file }}"
+        content: "{{ repo_file_content }}"
+
+- name: "Update apt cache"
+  ansible.builtin.apt:
+    update_cache: true
+  when: not ansible_check_mode

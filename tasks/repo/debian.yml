@@ -1,5 +1,19 @@
 ---
-- block:
+- environment:
+    https_proxy: "{{ apt_proxy | d('') }}"
+  tags: repo
+  become: true
+  block:
+    - name: "Set facts for {{ rname }} repository"
+      when: wanted_release in debian_archive_dist
+      vars:
+        debian_archive_dist:
+          - wheezy
+          - jessie
+          - stretch
+      ansible.builtin.set_fact:
+        debian_archived: true
+
     - name: "Configure Debian default repositories"
       ansible.builtin.copy:
         dest: /etc/apt/sources.list.d/debian.list
@@ -30,7 +44,3 @@
     - name: "Update package cache"
       ansible.builtin.apt:
         update_cache: true
-  environment:
-    https_proxy: "{{ apt_proxy }}"
-  tags:
-    - repo

@@ -1,0 +1,24 @@
+---
+- environment:
+    https_proxy: "{{ apt_proxy | d('') }}"
+  tags: repo
+  become: true
+  block:
+    - name: "Set facts for {{ rname }} debian repo"
+      ansible.builtin.set_fact:
+        key_url: https://repos.influxdata.com/influxdata-archive_compat.key
+        key_file_asc: "/etc/apt/keyrings/{{ rname }}.asc"
+        key_file: "/etc/apt/keyrings/{{ rname }}.gpg"
+        repo_file: "/etc/apt/sources.list.d/{{ rname }}.list"
+        repo_base: https://repos.influxdata.com/debian
+        legacy_repo_files:
+          - /etc/apt/sources.list.d/repos_influxdata_com_debian.list
+          - /etc/apt/trusted.gpg.d/influxdb.gpg
+
+    - name: "Set repo file content for {{ rname }} debian repo"
+      ansible.builtin.set_fact:
+        repo_file_content: |
+          deb [signed-by={{ key_file }}] {{ repo_base }} {{ wanted_release }} stable
+
+    - name: "Call generic repo configuration tasks for {{ rname }} debian repo"
+      ansible.builtin.include_tasks: repo/__generic__.yml

@@ -1,5 +1,6 @@
 ---
 - name: "Install required packages + update apt cache"
+  become: true
   ansible.builtin.apt:
     name: "{{ packages_present_apt }}"
     state: latest
@@ -7,14 +8,34 @@
   ignore_errors: true
   tags: repo
 
+- name: "Create required directories"
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  loop:
+    - /etc/apt/keyrings
+
 - name: "Manage Debian repositories"
   ansible.builtin.include_tasks: "repo/{{ item }}.yml"
   loop: "{{ repos + (repos_absent | d([])) }}"
+  vars:
+    rname: "{{ item }}"
   tags: repo
+
+- name: "Manage APT preferences"
+  ansible.builtin.include_tasks: "preferences.yml"
+  tags: preferences
 
 - name: "Manage packages"
   when: packages_present is defined or
-        packages_absent is defined
+        packages_absent is defined or
+        packages_hold is defined or
+        packages_unhold is defined
+  become: true
   ansible.builtin.import_tasks: packages.yml
   tags:
     - packages

@@ -1,5 +1,7 @@
 ---
 - name: "Install packages for {{ call_from | d(role_names) }}"
+  become: true
+  when: packages_present | d(false)
   ansible.builtin.apt:
     allow_change_held_packages: "{{ allow_change_held_packages | d(omit) }}"
     allow_downgrade: "{{ allow_downgrade | d(omit) }}"
@@ -26,26 +28,28 @@
     update_cache_retry_max_delay: "{{ update_cache_retry_max_delay | d(omit) }}"
     upgrade: "{{ upgrade | d(omit) }}"
   ignore_errors: "{{ ansible_check_mode }}"
-  when: packages_present | d(false)
 
 - name: "Remove packages for {{ call_from | d(role_names) }}"
+  when: packages_absent | d(false)
+  become: true
   ansible.builtin.apt:
     name: "{{ packages_absent | select() }}"
     state: absent
     autoremove: "{{ true if autoremove | d(false) else false }}"
     purge: "{{ true if purge | d(false) else false }}"
-  when: packages_absent | d(false)
 
 - name: "Hold package for {{ call_from | d(role_names) }}"
+  when: packages_hold | d(false)
+  become: true
   ansible.builtin.dpkg_selections:
     name: "{{ item | select() }}"
     selection: hold
   loop: "{{ packages_hold }}"
-  when: packages_hold | d(false)
 
 - name: "Unhold package for {{ call_from | d(role_names) }}"
+  when: packages_unhold | d(false)
+  become: true
   ansible.builtin.dpkg_selections:
     name: "{{ item | select() }}"
     selection: install
   loop: "{{ packages_hold }}"
-  when: packages_unhold | d(false)

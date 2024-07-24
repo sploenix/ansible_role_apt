@@ -1,0 +1,26 @@
+---
+- name: "Handle installation of recommended and suggested packages"
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/00-recommends
+    content: |
+      # {{ role_managed }}
+      APT::Install-Recommends {{ apt_install_recommends }};
+      APT::Install-Suggests {{ apt_install_suggests }};
+    owner: root
+    group: root
+    mode: 0644
+    force: true
+
+- name: "Handle apt proxy settings"
+  when: apt_proxy is defined
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/00-proxy
+    content: |
+      # {{ role_managed }}
+      Acquire::http::Proxy "{{ apt_proxy }}";
+    owner: root
+    group: root
+    mode: 0644
+    force: true

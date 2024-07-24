@@ -1,6 +1,7 @@
 ---
 # default enabled repos
-repos: []
+repos:
+  - debian
 
 packages_present_apt:
   - aptitude
@@ -15,4 +16,5 @@ default_pools:
 
 wanted_release: "{{ ansible_distribution_release }}"
 
-apt_proxy: ""
+apt_install_recommends: "no"
+apt_install_suggests: "no"
