@@ -1,0 +1,9 @@
+---
+- name: "Remove packages for {{ call_from | d(role_names) }}"
+  when: packages_absent | d(false)
+  become: true
+  ansible.builtin.apt:
+    name: "{{ packages_absent | select() }}"
+    state: absent
+    autoremove: "{{ true if autoremove | d(false) else false }}"
+    purge: "{{ true if purge | d(false) else false }}"

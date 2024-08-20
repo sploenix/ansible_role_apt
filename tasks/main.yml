@@ -1,10 +1,16 @@
 ---
+- name: "Update apt cache"
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  changed_when: false
+  tags: repo
+
 - name: "Install required packages + update apt cache"
   become: true
   ansible.builtin.apt:
     name: "{{ packages_present_apt }}"
     state: latest
-    update_cache: true
   ignore_errors: true
   tags: repo
 
@@ -31,12 +37,24 @@
   tags: preferences
 
 - name: "Manage packages"
-  when: packages_present is defined or
-        packages_absent is defined or
-        packages_hold is defined or
-        packages_unhold is defined
-  become: true
-  ansible.builtin.import_tasks: packages.yml
+  vars:
+    task_files: |
+      {% set include_task_files = [] %}
+      {% if packages_present is defined %}
+      {%    set include_task_files = include_task_files + ['install.yml'] %}
+      {% endif %}
+      {% if packages_absent is defined %}
+      {%    set include_task_files = include_task_files + ['uninstall.yml'] %}
+      {% endif %}
+      {% if packages_hold is defined %}
+      {%    set include_task_files = include_task_files + ['hold.yml'] %}
+      {% endif %}
+      {% if packages_unhold is defined %}
+      {%    set include_task_files = include_task_files + ['unhold.yml'] %}
+      {% endif %}
+      {{ include_task_files }}
+  ansible.builtin.include_tasks: "package/{{ item }}"
+  loop: "{{ task_files }}"
   tags:
     - packages
     - package

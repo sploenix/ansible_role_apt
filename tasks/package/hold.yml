@@ -1,0 +1,8 @@
+---
+- name: "Hold package for {{ call_from | d(role_names) }}"
+  when: packages_hold | d(false)
+  become: true
+  ansible.builtin.dpkg_selections:
+    name: "{{ item | select() }}"
+    selection: hold
+  loop: "{{ packages_hold }}"
