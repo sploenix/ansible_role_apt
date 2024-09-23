@@ -6,7 +6,7 @@
   changed_when: false
   tags: repo
 
-- name: "Install required packages + update apt cache"
+- name: "Install required packages"
   become: true
   ansible.builtin.apt:
     name: "{{ packages_present_apt }}"

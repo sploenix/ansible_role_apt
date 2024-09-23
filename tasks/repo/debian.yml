@@ -44,3 +44,4 @@
     - name: "Update package cache"
       ansible.builtin.apt:
         update_cache: true
+      changed_when: false

@@ -127,4 +127,5 @@
 - name: "Update apt cache"
   ansible.builtin.apt:
     update_cache: true
+  changed_when: false
   when: not ansible_check_mode
